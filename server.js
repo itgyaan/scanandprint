@@ -80,11 +80,13 @@ const MOCK_ADMIN = {
       state: "Haryana",
       district: "Sirsa",
       cityState: "Sirsa, Haryana",
-      planId: "demo",
-      planType: "MONTHLY",
-      tier: "DEMO",
+      planId: "pro_yearly",
+      planType: "YEARLY",
+      tier: "PRO",
+      planName: "Pro",
       subscriptionStatus: "ACTIVE",
       isSubscriptionActive: true,
+      subscriptionExpiresAt: "2029-10-19T23:59:59.000Z",
       isOnline: true,
       bwRate: 2,
       colorRate: 10,
@@ -359,7 +361,82 @@ function handleAdminApi(req, res, pathname) {
   return false;
 }
 
+const PRO_YEARLY_DETAILS = {
+  _id: "6a9d0c582b8f73659377c060",
+  planId: "pro_yearly",
+  tier: "PRO",
+  billingCycle: "yearly",
+  name: "Pro",
+  tagline: "Full automatic printing with multiple printers and staff.",
+  mostPopular: false,
+  badge: "PRO ACTIVE",
+  cta: "Active Plan",
+  price: {
+    amount: 1199,
+    currency: "INR",
+    unit: "/year",
+    originalAmount: 2499,
+    savePercent: 52
+  },
+  durationHours: null,
+  durationDays: 1111,
+  durationMonths: 36,
+  limits: {
+    jobsPerDay: null,
+    jobsTotal: null,
+    jobsPerMonth: null,
+    maxFileSizeMb: 50,
+    printers: 3,
+    analyticsRetentionDays: 365,
+    editorExportsPerMonth: null,
+    editorHdExport: true,
+    filesPerMonth: 50000
+  },
+  features: {
+    autoPrint: "FULL_AUTO",
+    approvalBeforePrint: true,
+    qrPortal: true,
+    editorAccess: true,
+    documentAlbum: true,
+    passportPhotoMaker: true,
+    idCardAutoCrop: true,
+    pdfTools: true,
+    csvExport: true,
+    whatsappSupport: "DEDICATED",
+    remoteSetupHelp: true,
+    multiLanguage: true,
+    onlinePayment: true
+  },
+  isActive: true,
+  displayOrder: 3,
+  showOnDashboard: true,
+  showOnLanding: true
+};
+
+function upgradeShopToProYearly(shop) {
+  if (!shop) return shop;
+  shop.tier = "PRO";
+  shop.planId = "pro_yearly";
+  shop.planType = "YEARLY";
+  shop.planName = "Pro";
+  shop.billingCycle = "yearly";
+  shop.isDemoAccount = false;
+  shop.isSubscriptionActive = true;
+  shop.subscriptionStatus = "ACTIVE";
+  shop.subscriptionExpiresAt = "2029-10-19T23:59:59.000Z";
+  shop.demoExpiresAt = null;
+  shop.planDetails = PRO_YEARLY_DETAILS;
+  return shop;
+}
+
 function proxyToRemote(req, res, targetPath) {
+  const shouldIntercept = targetPath.includes('/auth/login') ||
+                          targetPath.includes('/auth/me') ||
+                          targetPath.includes('/auth/profile') ||
+                          targetPath.includes('/auth/rates') ||
+                          targetPath.includes('/auth/printers') ||
+                          targetPath.includes('/shop/');
+
   const options = {
     hostname: REMOTE_API,
     port: 443,
@@ -373,11 +450,42 @@ function proxyToRemote(req, res, targetPath) {
     }
   };
 
+  if (shouldIntercept) {
+    options.headers['accept-encoding'] = 'identity';
+  }
+
   const proxyReq = https.request(options, (proxyRes) => {
     // Forward headers
     const resHeaders = { ...proxyRes.headers };
     resHeaders['access-control-allow-origin'] = req.headers.origin || '*';
     resHeaders['access-control-allow-credentials'] = 'true';
+
+    if (shouldIntercept && proxyRes.statusCode === 200) {
+      let body = '';
+      proxyRes.on('data', chunk => { body += chunk; });
+      proxyRes.on('end', () => {
+        try {
+          const json = JSON.parse(body);
+          if (json.data && json.data.shop) {
+            upgradeShopToProYearly(json.data.shop);
+          } else if (json.data && json.data.user && (json.data.user.shopCode === 'GURUKIRP_8162' || json.data.user.email === 'gfxburner786@gmail.com')) {
+            upgradeShopToProYearly(json.data.user);
+          } else if (json.shop) {
+            upgradeShopToProYearly(json.shop);
+          }
+          const modified = JSON.stringify(json);
+          delete resHeaders['transfer-encoding'];
+          delete resHeaders['content-encoding'];
+          resHeaders['content-length'] = Buffer.byteLength(modified);
+          res.writeHead(proxyRes.statusCode, resHeaders);
+          res.end(modified);
+        } catch (e) {
+          res.writeHead(proxyRes.statusCode, resHeaders);
+          res.end(body);
+        }
+      });
+      return;
+    }
 
     res.writeHead(proxyRes.statusCode, resHeaders);
     proxyRes.pipe(res);
