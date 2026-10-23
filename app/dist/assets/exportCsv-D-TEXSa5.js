@@ -1,0 +1,2 @@
+function e(e=[],t=`export.csv`){if(!e||e.length===0)return;let n=Object.keys(e[0]),r=[n.join(`,`)];for(let t of e){let e=n.map(e=>`"${(``+(t[e]??``)).replace(/"/g,`\\"`)}"`);r.push(e.join(`,`))}let i=new Blob([r.join(`
+`)],{type:`text/csv;charset=utf-8;`}),a=URL.createObjectURL(i),o=document.createElement(`a`);o.setAttribute(`href`,a),o.setAttribute(`download`,t),o.style.visibility=`hidden`,document.body.appendChild(o),o.click(),document.body.removeChild(o)}export{e as t};

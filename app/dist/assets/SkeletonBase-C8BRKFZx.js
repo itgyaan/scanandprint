@@ -1,0 +1,1 @@
+import{u as e}from"./vendor-animation-D7gB0erA.js";var t=e();function n({className:e=``,variant:n=`light`}){let r=n===`dark`;return(0,t.jsx)(`div`,{className:`relative overflow-hidden rounded-md ${r?`bg-stone-800/90`:`bg-stone-200/80`} ${r?`shimmer-effect`:`shimmer-effect-light`} ${e}`,"aria-hidden":`true`})}export{n as t};

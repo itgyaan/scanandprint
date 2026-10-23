@@ -1,0 +1,1 @@
+import{u as e}from"./vendor-animation-D7gB0erA.js";import{W as t}from"./index-DT7bjHxJ.js";import{t as n}from"./ShopAuth-rmjyLVRW.js";var r=e();function i(){return(0,r.jsxs)(r.Fragment,{children:[(0,r.jsx)(t,{path:`/shop-login`}),(0,r.jsx)(n,{})]})}export{i as default};

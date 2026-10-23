@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scan&amp;Print — Counter Order</title>
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap');
+
+    :root {
+      --bg-main: #09090b;
+      --bg-card: #121113;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --brand: #F0245C;
+      --emerald: #10B981;
+      --emerald-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      --emerald-glow: rgba(16, 185, 129, 0.35);
+      --rose: #F43F5E;
+      --rose-gradient: linear-gradient(135deg, #F43F5E 0%, #e11d48 100%);
+      --rose-glow: rgba(244, 63, 94, 0.35);
+      --amber: #F59E0B;
+      --sky: #38bdf8;
+      --text-primary: #FAFAFA;
+      --text-secondary: #A1A1AA;
+      --text-muted: #71717A;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+      -webkit-app-region: drag;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .header-icon-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-badge {
+      width: 24px;
+      height: 24px;
+      background: rgba(240, 36, 92, 0.15);
+      color: var(--brand);
+      border: 1px solid rgba(240, 36, 92, 0.3);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.2px;
+    }
+
+    .time-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .info-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      -webkit-app-region: no-drag;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    }
+
+    .file-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .file-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .file-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #e4e4e7;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 280px;
+    }
+
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .spec-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 7px;
+      padding: 4px 6px;
+      min-width: 0;
+    }
+
+    .spec-chip i {
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .spec-chip-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .spec-chip-label {
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .spec-chip-val {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .spec-chip.chip-color i { color: var(--sky); }
+    .spec-chip.chip-color.is-bw i { color: var(--text-secondary); }
+    .spec-chip.chip-duplex i { color: var(--emerald); }
+    .spec-chip.chip-duplex.is-single i { color: var(--text-secondary); }
+    .spec-chip.chip-pages i { color: var(--amber); }
+    .spec-chip.chip-copies i { color: var(--brand); }
+    .spec-chip.chip-paper i { color: #a78bfa; }
+    .spec-chip.chip-type i { color: #f472b6; }
+
+    .amount-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 5px;
+      border-top: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .amount-label {
+      font-weight: 700;
+      color: var(--text-secondary);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .amount-highlight {
+      color: var(--emerald);
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .amount-note {
+      color: var(--text-muted);
+      font-size: 9.5px;
+      font-weight: 500;
+      margin-left: 3px;
+    }
+
+    .actions-container {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      -webkit-app-region: no-drag;
+      flex-shrink: 0;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 7px;
+    }
+
+    button {
+      border: none;
+      outline: none;
+      padding: 8px 8px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--emerald-gradient);
+      box-shadow: 0 2px 8px var(--emerald-glow);
+    }
+
+    .btn-approve:hover {
+      filter: brightness(1.12);
+      box-shadow: 0 3px 12px rgba(16, 185, 129, 0.5);
+    }
+
+    .btn-deny {
+      background: var(--rose-gradient);
+      box-shadow: 0 2px 8px var(--rose-glow);
+    }
+
+    .btn-deny:hover {
+      filter: brightness(1.12);
+      box-shadow: 0 3px 12px rgba(244, 63, 94, 0.5);
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 9.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-container">
+    <div class="header-icon-title">
+      <div class="icon-badge"><i class='bx bx-printer'></i></div>
+      <h1 class="title">Counter Cash Order</h1>
+    </div>
+    <span class="time-badge" id="val-time">--:--</span>
+  </div>
+
+  <div class="info-card">
+    <div class="file-row">
+      <div class="file-icon"><i class='bx bxs-file-pdf' id="file-icon-el"></i></div>
+      <div class="file-name" id="val-file">document.pdf</div>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-chip chip-pages">
+        <i class='bx bx-copy-alt'></i>
+        <div class="spec-chip-text">
+          <span class="spec-chip-label">Pages</span>
+          <span class="spec-chip-val" id="val-pages">1</span>
+        </div>
+      </div>
+      <div class="spec-chip chip-copies">
+        <i class='bx bx-layer'></i>
+        <div class="spec-chip-text">
+          <span class="spec-chip-label">Copies</span>
+          <span class="spec-chip-val" id="val-copies">1</span>
+        </div>
+      </div>
+      <div class="spec-chip chip-color" id="chip-color">
+        <i class='bx bx-palette' id="icon-color"></i>
+        <div class="spec-chip-text">
+          <span class="spec-chip-label">Color</span>
+          <span class="spec-chip-val" id="val-color">B&amp;W</span>
+        </div>
+      </div>
+      <div class="spec-chip chip-duplex" id="chip-duplex">
+        <i class='bx bx-duplicate' id="icon-duplex"></i>
+        <div class="spec-chip-text">
+          <span class="spec-chip-label">Sides</span>
+          <span class="spec-chip-val" id="val-duplex">Single-sided</span>
+        </div>
+      </div>
+      <div class="spec-chip chip-paper" id="chip-paper">
+        <i class='bx bx-file-blank' id="icon-paper"></i>
+        <div class="spec-chip-text">
+          <span class="spec-chip-label">Paper</span>
+          <span class="spec-chip-val" id="val-paper">A4</span>
+        </div>
+      </div>
+      <div class="spec-chip chip-type" id="chip-type">
+        <i class='bx bx-briefcase-alt-2' id="icon-type"></i>
+        <div class="spec-chip-text">
+          <span class="spec-chip-label">Type</span>
+          <span class="spec-chip-val" id="val-type">Document</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="amount-row">
+      <span class="amount-label">Collect at Counter</span>
+      <span>
+        <span class="amount-highlight" id="val-amount-num">₹0</span>
+        <span class="amount-note">Cash</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="actions-container">
+    <div class="button-group">
+      <button class="btn-approve" id="btn-approve" type="button">
+        <i class='bx bx-check-circle'></i>
+        <span>Approve &amp; Print</span>
+      </button>
+      <button class="btn-deny" id="btn-deny" type="button">
+        <i class='bx bx-x-circle'></i>
+        <span>Reject</span>
+      </button>
+    </div>
+    <p class="footer-note">Reject karne par order cancel ho jayega</p>
+  </div>
+
+  <script src="uiUtils.js"></script>
+  <script>
+    const {
+      playNotificationChime,
+      isDuplexRequested,
+      formatCurrency,
+      formatTimeShort,
+      fileIconClass,
+    } = window.ScanAndPrintUI || {}
+
+    let currentJobId = null
+
+    function renderJobData(jobData) {
+      if (!jobData) return
+      currentJobId = jobData.jobId
+      if (typeof playNotificationChime === 'function') playNotificationChime()
+
+      const isColor = jobData.colorType === 'COLOR'
+      const isDuplex = typeof isDuplexRequested === 'function' ? isDuplexRequested(jobData) : Boolean(jobData.isDuplex)
+      const pages = Number(jobData.totalPages) || 1
+      const copies = Number(jobData.copies) || 1
+      const amount = Number(jobData.totalAmount) || 0
+      const fileName = jobData.originalFileName || 'document.pdf'
+
+      document.getElementById('val-file').textContent = fileName
+      document.getElementById('file-icon-el').className = 'bx ' + (fileIconClass ? fileIconClass(fileName) : 'bxs-file-pdf')
+      document.getElementById('val-time').textContent = formatTimeShort ? formatTimeShort(jobData.createdAt) : '--:--'
+      document.getElementById('val-pages').textContent = `${pages} page${pages > 1 ? 's' : ''}`
+      document.getElementById('val-copies').textContent = copies > 1 ? `${copies} copies` : '1 copy'
+
+      const colorChip = document.getElementById('chip-color')
+      const colorIcon = document.getElementById('icon-color')
+      document.getElementById('val-color').textContent = isColor ? 'Full Color' : 'Black & White'
+      colorChip.classList.toggle('is-bw', !isColor)
+      colorIcon.className = 'bx ' + (isColor ? 'bx-palette' : 'bx-brightness')
+
+      const duplexChip = document.getElementById('chip-duplex')
+      const duplexIcon = document.getElementById('icon-duplex')
+      document.getElementById('val-duplex').textContent = isDuplex ? 'Double-sided' : 'Single-sided'
+      duplexChip.classList.toggle('is-single', !isDuplex)
+      duplexIcon.className = 'bx ' + (isDuplex ? 'bx-duplicate' : 'bx-file-blank')
+
+      document.getElementById('val-paper').textContent = jobData.paperSize || 'A4'
+
+      let jobTypeDisplay = 'Document'
+      if (jobData.jobType === 'PHOTO_SHEET' || jobData.jobType === 'PHOTO') {
+        jobTypeDisplay = `Photos (${jobData.photoCount || 0})`
+      } else if (jobData.jobType === 'RESUME') {
+        jobTypeDisplay = 'Resume'
+      } else if (jobData.jobType === 'ID_CARD') {
+        jobTypeDisplay = 'ID Card'
+      }
+      document.getElementById('val-type').textContent = jobTypeDisplay
+      document.getElementById('val-amount-num').textContent = formatCurrency ? formatCurrency(amount, jobData) : `₹${amount}`
+    }
+
+    window.electronAPI?.onCounterOrder((jobData) => {
+      renderJobData(jobData)
+    })
+
+    if (window.electronAPI?.getCounterOrder) {
+      window.electronAPI.getCounterOrder().then((jobData) => {
+        if (jobData) renderJobData(jobData)
+      })
+    }
+
+    document.getElementById('btn-approve').addEventListener('click', () => {
+      const btn = document.getElementById('btn-approve')
+      btn.disabled = true
+      btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Printing..."
+      window.electronAPI?.approveCounterOrder(currentJobId)
+    })
+
+    document.getElementById('btn-deny').addEventListener('click', () => {
+      const btn = document.getElementById('btn-deny')
+      btn.disabled = true
+      btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Cancelling..."
+      window.electronAPI?.denyCounterOrder(currentJobId)
+    })
+  </script>
+</body>
+</html>

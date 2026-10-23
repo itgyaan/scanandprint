@@ -1,0 +1,22 @@
+{
+  "name": "scanandprint-clone",
+  "version": "1.0.0",
+  "description": "Scan&Print Full Clone - Scan QR to Print Documents Automatically",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "serve": "node server.js"
+  },
+  "keywords": [
+    "scanandprint",
+    "kiosk",
+    "printing",
+    "cybercafe"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "7zip-bin": "^5.2.0"
+  }
+}

@@ -1,0 +1,32 @@
+const { contextBridge, ipcRenderer } = require('electron')
+
+// Expose secure API to Renderer Process
+contextBridge.exposeInMainWorld('electronAPI', {
+  getConfig: () => ipcRenderer.invoke('get-config'),
+  saveConfig: (config) => ipcRenderer.invoke('save-config', config),
+  getShopStats: () => ipcRenderer.invoke('get-shop-stats'),
+  onShopStatsUpdated: (callback) => ipcRenderer.on('shop-stats-updated', (event, data) => callback(data)),
+  getRecentLogs: () => ipcRenderer.invoke('get-recent-logs'),
+  clearLogs: () => ipcRenderer.invoke('clear-logs'),
+  onLogsCleared: (callback) => ipcRenderer.on('agent-logs-cleared', (event, data) => callback(data)),
+  getPrinters: (forceRefresh) => ipcRenderer.invoke('get-printers', forceRefresh),
+  getPrintersStatus: (forceRefresh) => ipcRenderer.invoke('get-printers-status', forceRefresh),
+  testPrint: (printerName, mode) => ipcRenderer.invoke('test-print', printerName, mode),
+  createDesktopShortcut: () => ipcRenderer.invoke('create-desktop-shortcut'),
+  openLogsFolder: () => ipcRenderer.invoke('open-logs-folder'),
+  reconnectSocket: () => ipcRenderer.invoke('reconnect-socket'),
+  exitApp: () => ipcRenderer.invoke('exit-app'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  onStatusUpdate: (callback) => ipcRenderer.on('agent-status-update', (event, data) => callback(data)),
+  onIncomingJob: (callback) => ipcRenderer.on('incoming-job', (event, data) => callback(data)),
+  onConfigUpdated: (callback) => ipcRenderer.on('config-updated', (event, data) => callback(data)),
+  onCounterOrder: (callback) => ipcRenderer.on('counter-order-data', (event, data) => callback(data)),
+  getCounterOrder: () => ipcRenderer.invoke('get-counter-order'),
+  approveCounterOrder: (jobId) => ipcRenderer.invoke('approve-counter-order', jobId),
+  denyCounterOrder: (jobId) => ipcRenderer.invoke('deny-counter-order', jobId),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  getUpdateStatus: () => ipcRenderer.invoke('get-update-status'),
+  onUpdateStatus: (callback) => ipcRenderer.on('update-status-changed', (event, data) => callback(data)),
+  onAgentLog: (callback) => ipcRenderer.on('agent-log', (event, data) => callback(data)),
+})

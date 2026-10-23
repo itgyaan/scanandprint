@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scan&amp;Print — Desktop Print Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=2.0.9.8">
+</head>
+
+<body>
+  <!-- Modern Window Title Bar (40px custom top bar) -->
+  <header class="window-titlebar" id="windowTitlebar">
+    <div class="window-titlebar-brand">
+      <img src="../../assets/icon.png" alt="Scan&Print" class="window-titlebar-icon" onerror="this.src='../../assets/icon.svg'">
+      <span class="window-titlebar-text">Scan&amp;Print — Desktop Print Agent</span>
+    </div>
+  </header>
+
+  <div class="ambient-glow"></div>
+
+  <!-- Incoming Job Real-Time Floating Banner -->
+  <div id="jobBanner" class="job-banner">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div class="job-banner-icon">
+        <i class='bx bxs-zap'></i>
+      </div>
+      <div>
+        <div style="font-size: 13px; font-weight: 800; color: #ffffff;" id="bannerJobTitle">Incoming Print Order</div>
+        <div style="font-size: 11px; color: #a1a1aa;" id="bannerJobSubtitle">Auto-spooling to printer...</div>
+      </div>
+    </div>
+    <div id="bannerJobBadge" class="job-banner-badge">AUTO-PRINTING</div>
+  </div>
+
+  <div class="app-shell" id="appShell">
+    <!-- ============================= SIDEBAR ============================= -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-logo">
+          <div class="sidebar-logo-icon-wrap">
+            <img src="../../assets/icon.png" alt="Scan&Print" onerror="this.src='../../assets/icon.svg'">
+          </div>
+          <div class="sidebar-brand-text">
+            <div class="sidebar-brand-name">Scan&amp;Print</div>
+            <div class="sidebar-brand-ver" id="appVersion">--</div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-panel="dashboard" title="Dashboard">
+          <span class="nav-icon-box"><i class='bx bxs-dashboard'></i></span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item" data-panel="printers" title="Printers">
+          <span class="nav-icon-box"><i class='bx bx-printer'></i></span>
+          <span class="nav-label">Printers</span>
+          <span class="nav-badge" id="navPrintersBadge">0</span>
+        </button>
+        <button class="nav-item" data-panel="setup" title="Shop Setup">
+          <span class="nav-icon-box"><i class='bx bx-key'></i></span>
+          <span class="nav-label">Shop Setup</span>
+        </button>
+        <button class="nav-item" data-panel="system" title="System">
+          <span class="nav-icon-box"><i class='bx bx-cog'></i></span>
+          <span class="nav-label">System</span>
+        </button>
+        <button class="nav-item" data-panel="logs" title="Activity Log">
+          <span class="nav-icon-box"><i class='bx bxs-zap'></i></span>
+          <span class="nav-label">Activity Log</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button id="sidebarCollapseBtn" class="sidebar-bottom-btn" title="Collapse sidebar">
+          <span class="nav-icon-box"><i class='bx bx-chevrons-left'></i></span>
+          <span class="nav-label">Collapse</span>
+        </button>
+
+        <div class="sidebar-status-mini" id="sidebarStatusMini" title="Agent connection status">
+          <span class="status-icon-box">
+            <i class='bx bx-broadcast'></i>
+            <span class="status-badge-dot" id="sidebarStatusDot"></span>
+          </span>
+          <span class="status-label" id="sidebarStatusLabel">Disconnected</span>
+        </div>
+
+        <button id="sidebarQuitBtn" class="sidebar-bottom-btn quit-btn" title="Quit Agent">
+          <span class="nav-icon-box"><i class='bx bx-power-off'></i></span>
+          <span class="nav-label">Quit Agent</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ============================= MAIN CONTENT ============================= -->
+    <main class="main-content">
+
+      <!-- ---------- PANEL: DASHBOARD ---------- -->
+      <section class="panel active" id="panel-dashboard">
+        <div class="panel-header">
+          <div>
+            <h2 id="dashboardShopHeading">Dashboard</h2>
+            <div class="panel-sub" id="dashboardShopSubtitle">Live overview, daily metrics &amp; print queue</div>
+          </div>
+          <div class="header-right-tools">
+            <span class="sync-time-pill" id="lastSyncedBadge" title="Automatic real-time WebSocket & database sync">
+              <i class='bx bx-broadcast' style="color: var(--emerald);"></i> <span id="lastSyncedText">Live Auto-Sync</span>
+            </span>
+          </div>
+        </div>
+
+        <div id="dashboardUpdateBanner" class="update-banner" style="display: none;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="card-title-icon" style="color: var(--brand);"><i class='bx bxs-up-arrow-circle'></i></div>
+            <div>
+              <div style="font-size: 13px; font-weight: 800; color: #fff;" id="dashboardUpdateTitle">New Update Available!</div>
+              <div style="font-size: 11px; color: var(--text-secondary);" id="dashboardUpdateSub">A new version of Scan&amp;Print Agent is ready to install.</div>
+            </div>
+          </div>
+          <button type="button" id="dashboardUpdateBtn" class="btn btn-primary btn-install-restart" style="height: 34px; padding: 0 14px; font-size: 11px; width: auto;">
+            <span>Install &amp; Restart</span> <i class='bx bx-power-off'></i>
+          </button>
+        </div>
+
+        <!-- Connection & Shop Identity Status Card -->
+        <div id="statusCard" class="status-card unconfigured">
+          <div class="status-header-row">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <div id="statusPill" class="status-pill unconfigured">
+                <span id="statusDot" class="status-dot"></span>
+                <span id="statusText">Awaiting Shop Setup</span>
+              </div>
+              <span id="dashboardPlanBadge" class="shop-meta-badge" style="display: none;"></span>
+              <span id="dashboardRatesBadge" class="shop-meta-badge" style="display: none;"></span>
+            </div>
+            <div class="shop-code-pill" id="shopCodePill">
+              <span>Shop ID:</span>
+              <span id="displayShopCode" style="color: var(--brand);">UNSET</span>
+              <button id="copyShopCodeBtn" class="copy-mini-btn" title="Copy Shop ID"><i class='bx bx-copy'></i></button>
+            </div>
+          </div>
+
+          <div class="metrics-row">
+            <div class="metric-box">
+              <span class="metric-label">Spooler Devices</span>
+              <span class="metric-val" id="printersCountVal">0 Detected</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Dispatch Mode</span>
+              <span class="metric-val" id="autoPrintModeVal">Configure Shop</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Active Queue</span>
+              <span class="metric-val" id="activeQueueStatusVal">0 Pending</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily DB Analytics Grid (Revenue, Prints, Jobs, Queue) -->
+        <div class="kpi-grid">
+          <div class="kpi-card kpi-emerald">
+            <div class="kpi-top">
+              <span class="kpi-label">Today's Revenue</span>
+              <span class="kpi-icon"><i class='bx bx-rupee'></i></span>
+            </div>
+            <div class="kpi-value" id="todayRevenueVal">₹0</div>
+            <div class="kpi-sub" id="todayRevenueSub">Online: ₹0 · Counter: ₹0</div>
+          </div>
+
+          <div class="kpi-card kpi-sky">
+            <div class="kpi-top">
+              <span class="kpi-label">Today's Prints (Pages)</span>
+              <span class="kpi-icon"><i class='bx bx-layer'></i></span>
+            </div>
+            <div class="kpi-value" id="todayPrintsVal">0 Pages</div>
+            <div class="kpi-sub" id="todayPrintsSub">B&amp;W: 0p · Color: 0p</div>
+          </div>
+
+          <div class="kpi-card kpi-brand">
+            <div class="kpi-top">
+              <span class="kpi-label">Today's Completed Jobs</span>
+              <span class="kpi-icon"><i class='bx bx-check-shield'></i></span>
+            </div>
+            <div class="kpi-value" id="todayJobsVal">0 Jobs</div>
+            <div class="kpi-sub" id="todayJobsSub">B&amp;W: 0 · Color: 0</div>
+          </div>
+
+          <div class="kpi-card kpi-amber">
+            <div class="kpi-top">
+              <span class="kpi-label">Counter &amp; Failed Today</span>
+              <span class="kpi-icon"><i class='bx bx-time-five'></i></span>
+            </div>
+            <div class="kpi-value" id="todayPendingVal">0 Waiting</div>
+            <div class="kpi-sub" id="todayPendingSub">In Queue: 0 · Failed: 0</div>
+          </div>
+        </div>
+
+        <!-- Monthly & Lifetime Database Ledger Summary -->
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title-group">
+              <div class="card-title-icon"><i class='bx bx-bar-chart-alt-2'></i></div>
+              <div>
+                <h3>Shop Ledger Summary</h3>
+                <div class="card-sub" id="ledgerPeriodSub">Cumulative performance for this Shop ID</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ledger-summary-grid">
+            <div class="ledger-block">
+              <div class="ledger-block-title"><i class='bx bx-calendar'></i> This Month (<span id="monthKeyLabel">--</span>)</div>
+              <div class="ledger-stats-row">
+                <div class="ledger-stat">
+                  <span class="ledger-stat-label">Revenue</span>
+                  <span class="ledger-stat-val" id="monthRevenueVal" style="color: var(--emerald);">₹0</span>
+                </div>
+                <div class="ledger-stat">
+                  <span class="ledger-stat-label">Prints</span>
+                  <span class="ledger-stat-val" id="monthPrintsVal">0 Pages</span>
+                </div>
+                <div class="ledger-stat">
+                  <span class="ledger-stat-label">Jobs</span>
+                  <span class="ledger-stat-val" id="monthJobsVal">0</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ledger-block">
+              <div class="ledger-block-title"><i class='bx bx-trophy'></i> Lifetime Total</div>
+              <div class="ledger-stats-row">
+                <div class="ledger-stat">
+                  <span class="ledger-stat-label">Total GMV</span>
+                  <span class="ledger-stat-val" id="lifetimeRevenueVal" style="color: var(--emerald);">₹0</span>
+                </div>
+                <div class="ledger-stat">
+                  <span class="ledger-stat-label">Total Prints</span>
+                  <span class="ledger-stat-val" id="lifetimePrintsVal">0 Pages</span>
+                </div>
+                <div class="ledger-stat">
+                  <span class="ledger-stat-label">Total Jobs</span>
+                  <span class="ledger-stat-val" id="lifetimeJobsVal">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live & Recent Print Jobs Table -->
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title-group">
+              <div class="card-title-icon"><i class='bx bx-list-check'></i></div>
+              <div>
+                <h3>Recent Print Jobs</h3>
+                <div class="card-sub">Live print queue &amp; recent orders for this shop</div>
+              </div>
+            </div>
+            <span class="shop-meta-badge" id="recentJobsCountBadge">0 Jobs</span>
+          </div>
+
+          <div class="jobs-table-wrap">
+            <table class="jobs-table">
+              <thead>
+                <tr>
+                  <th>Job / Time</th>
+                  <th>Document</th>
+                  <th>Specs</th>
+                  <th>Amount</th>
+                  <th>Status / Action</th>
+                </tr>
+              </thead>
+              <tbody id="recentJobsTableBody">
+                <tr>
+                  <td colspan="5" class="empty-table-cell">No print jobs recorded yet for this shop.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- PANEL: PRINTERS ---------- -->
+      <section class="panel" id="panel-printers">
+        <div class="panel-header">
+          <div>
+            <h2>Printers</h2>
+            <div class="panel-sub">Live spooler status, Simplex/Duplex &amp; Color/B&amp;W driver capabilities</div>
+          </div>
+          <button id="refreshPrintersBtn" class="btn btn-outline btn-sm">
+            <span>Refresh</span> <i class='bx bx-refresh'></i>
+          </button>
+        </div>
+
+        <div id="printerCardsGrid" class="printer-cards-grid">
+          <div class="empty-state-mini">Scanning Windows printer spooler...</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title-group">
+              <div class="card-title-icon"><i class='bx bx-cog'></i></div>
+              <div>
+                <h3>Default Printer Assignment</h3>
+                <div class="card-sub">Which physical printer handles B&amp;W, Color &amp; Double-sided orders</div>
+              </div>
+            </div>
+            <span id="planBadge" class="printer-status-badge" style="display:none;"></span>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="bwPrinter">Black &amp; White (B&amp;W) Printer</label>
+              <select id="bwPrinter">
+                <option value="">-- Scanning Local Printers... --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="colorPrinter">Color Printer</label>
+              <select id="colorPrinter">
+                <option value="">-- Scanning Local Printers... --</option>
+              </select>
+              <p id="colorPrinterLockHint" class="field-hint" style="display:none; color:#f59e0b;"><i class='bx bxs-lock-alt' style='color:#f59e0b; vertical-align: middle;'></i> Not included in your current plan — upgrade to assign a separate color printer.</p>
+            </div>
+            <div class="form-group">
+              <label for="duplexPrinter">Double-sided (Duplex) Printer</label>
+              <select id="duplexPrinter">
+                <option value="">-- Scanning Local Printers... --</option>
+              </select>
+              <p id="duplexPrinterLockHint" class="field-hint" style="display:none; color:#f59e0b;"><i class='bx bxs-lock-alt' style='color:#f59e0b; vertical-align: middle;'></i> Not included in your current plan — upgrade to assign a dedicated duplex printer.</p>
+            </div>
+          </div>
+          <p class="field-hint">Any order marked "double-sided" routes to the Duplex printer if set, or falls back to your B&amp;W / Color printer.</p>
+
+          <div class="btn-row">
+            <button type="button" id="saveAssignmentBtn" class="btn btn-primary">
+              <span>Save Printer Assignment</span> <i class='bx bx-save'></i>
+            </button>
+            <button type="button" id="testBwPrintBtn" class="btn btn-secondary">
+              <span>Test B&amp;W Print</span> <i class='bx bx-file-blank'></i>
+            </button>
+            <button type="button" id="testColorPrintBtn" class="btn btn-secondary">
+              <span>Test Color Print</span> <i class='bx bx-palette'></i>
+            </button>
+            <button type="button" id="testDuplexPrintBtn" class="btn btn-secondary">
+              <span>Test Duplex Print</span> <i class='bx bx-duplicate'></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- PANEL: SHOP SETUP ---------- -->
+      <section class="panel" id="panel-setup">
+        <div class="panel-header">
+          <div>
+            <h2>Shop Setup</h2>
+            <div class="panel-sub">Pair this PC with your Shop Owner Dashboard</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title-group">
+              <div class="card-title-icon"><i class='bx bx-key'></i></div>
+              <div>
+                <h3>Shop Pairing Credentials</h3>
+                <div class="card-sub">Copy your Shop ID Code and Secret API Key from your Shop Owner Dashboard</div>
+              </div>
+            </div>
+          </div>
+
+          <form id="settingsForm" style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="shopId">Shop ID Code *</label>
+                <input type="text" id="shopId" class="mono-font" placeholder="e.g. PRINT101" required autocomplete="off">
+              </div>
+              <div class="form-group">
+                <label for="secretKey">Secret API Key *</label>
+                <div class="input-wrap">
+                  <input type="password" id="secretKey" placeholder="Paste Secret API Key..." required autocomplete="off">
+                  <button type="button" id="toggleSecretBtn" class="input-icon-btn" title="Show / Hide Key">
+                    <i class='bx bx-show'></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" id="saveBtn" class="btn btn-primary">
+              <span>Save Credentials &amp; Connect <i class='bx bx-rocket'></i></span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Synced Shop Profile Details Card -->
+        <div class="card" id="setupShopInfoCard">
+          <div class="card-title-row">
+            <div class="card-title-group">
+              <div class="card-title-icon"><i class='bx bx-store'></i></div>
+              <div>
+                <h3>Synced Shop Details</h3>
+                <div class="card-sub">Live merchant details fetched automatically via your Shop ID</div>
+              </div>
+            </div>
+          </div>
+          <div class="shop-details-grid" id="setupShopDetailsGrid">
+            <div class="shop-detail-item">
+              <span class="shop-detail-label">Shop Name</span>
+              <span class="shop-detail-val" id="detailShopName">--</span>
+            </div>
+            <div class="shop-detail-item">
+              <span class="shop-detail-label">Owner / Location</span>
+              <span class="shop-detail-val" id="detailShopLocation">--</span>
+            </div>
+            <div class="shop-detail-item">
+              <span class="shop-detail-label">Active Plan</span>
+              <span class="shop-detail-val" id="detailShopPlan">--</span>
+            </div>
+            <div class="shop-detail-item">
+              <span class="shop-detail-label">Configured Rates</span>
+              <span class="shop-detail-val" id="detailShopRates">--</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- PANEL: SYSTEM ---------- -->
+      <section class="panel" id="panel-system">
+        <div class="panel-header">
+          <div>
+            <h2>System</h2>
+            <div class="panel-sub">Windows startup, shortcuts &amp; connection controls</div>
+          </div>
+        </div>
+
+        <!-- ---------- APPLICATION UPDATES CARD ---------- -->
+        <div class="card" id="updateCard">
+          <div class="card-title-row">
+            <div class="card-title-group">
+              <div class="card-title-icon"><i class='bx bx-cloud-download'></i></div>
+              <div>
+                <h3>Application Updates</h3>
+                <div class="card-sub">Check and apply latest desktop agent features &amp; bug fixes</div>
+              </div>
+            </div>
+            <div class="status-pill connected" id="updateStatusPill">
+              <span class="status-dot"></span>
+              <span id="updateStatusText">Checking version...</span>
+            </div>
+          </div>
+
+          <div class="update-info-box" id="updateInfoBox">
+            <div class="update-version-row">
+              <span class="update-label">Installed Version:</span>
+              <span class="update-val mono-font" id="currentVersionVal">--</span>
+            </div>
+            <div class="update-version-row" id="targetVersionRow" style="display: none;">
+              <span class="update-label">Available Version:</span>
+              <span class="update-val mono-font" id="targetVersionVal" style="color: var(--emerald);">Checking...</span>
+            </div>
+            <div class="update-message" id="updateMessage">Click below to check for the latest releases from GitHub.</div>
+          </div>
+
+          <div class="update-progress-wrap" id="updateProgressWrap" style="display: none;">
+            <div class="update-progress-header">
+              <span id="updateProgressLabel">Downloading update...</span>
+              <span class="mono-font" id="updateProgressPercent" style="color: var(--brand);">0%</span>
+            </div>
+            <div class="update-progress-track">
+              <div class="update-progress-bar" id="updateProgressBar"></div>
+            </div>
+          </div>
+
+          <div class="btn-row" style="margin-top: 10px;">
+            <button type="button" id="checkForUpdatesBtn" class="btn btn-secondary">
+              <i class='bx bx-refresh' id="checkUpdateIcon"></i>
+              <span id="checkUpdateBtnText">Check for Updates</span>
+            </button>
+            <button type="button" id="installRestartBtn" class="btn btn-primary btn-install-restart" style="display: none;">
+              <i class='bx bx-power-off'></i>
+              <span id="installRestartBtnText">Install &amp; Restart Now</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title-group">
+              <div class="card-title-icon"><i class='bx bx-cog'></i></div>
+              <div>
+                <h3>System &amp; Startup Settings</h3>
+                <div class="card-sub">Control how the agent behaves with Windows and the cloud server</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Start automatically with Windows</span>
+              <span class="toggle-desc">Agent launches silently in the system tray on every PC boot</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="autoStartToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="btn-row" style="margin-top: 10px;">
+            <button type="button" id="createShortcutBtn" class="btn btn-secondary">
+              <span>Create Desktop Shortcut Icon <i class='bx bxs-pin'></i></span>
+            </button>
+            <button type="button" id="reconnectBtn" class="btn btn-outline">
+              <span>Reconnect to Server</span> <i class='bx bx-refresh'></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- PANEL: ACTIVITY LOG ---------- -->
+      <section class="panel" id="panel-logs">
+        <div class="panel-header">
+          <div>
+            <h2>Activity Log</h2>
+            <div class="panel-sub">Real-time status updates and incoming print telemetry</div>
+          </div>
+          <div class="btn-row">
+            <button id="copyLogsBtn" class="btn btn-outline btn-sm"><i class='bx bx-copy'></i> Copy All</button>
+            <button id="clearLogBtn" class="btn btn-outline btn-sm"><i class='bx bx-trash'></i> Clear</button>
+            <button id="openLogFileBtn" class="btn btn-outline btn-sm"><i class='bx bx-folder-open'></i> View Log Files</button>
+          </div>
+        </div>
+
+        <div class="log-toolbar">
+          <div class="log-filter-group" id="logFilterGroup">
+            <button type="button" class="log-filter-btn active" data-filter="all">All</button>
+            <button type="button" class="log-filter-btn" data-filter="job"><i class='bx bxs-zap' style='color: #fb7185;'></i> Jobs</button>
+            <button type="button" class="log-filter-btn" data-filter="print"><i class='bx bx-printer' style='color: #fbbf24;'></i> Prints</button>
+            <button type="button" class="log-filter-btn" data-filter="error"><i class='bx bx-error' style='color: #f87171;'></i> Errors</button>
+            <button type="button" class="log-filter-btn" data-filter="online"><i class='bx bx-check-circle' style='color: #34d399;'></i> Online</button>
+          </div>
+          <div class="log-search-wrap">
+            <i class='bx bx-search'></i>
+            <input type="text" id="logSearchInput" placeholder="Filter logs (e.g. Job ID, Printer)...">
+          </div>
+        </div>
+
+        <div id="activityLog" class="log-box log-box-full"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Footer Toast / Alerts -->
+  <div id="toastMessage" class="toast-msg"></div>
+
+  <script src="uiUtils.js"></script>
+  <script src="renderer.js"></script>
+</body>
+
+</html>
